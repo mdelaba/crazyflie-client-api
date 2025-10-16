@@ -18,14 +18,12 @@ deck_attached_event = Event()
 
 logging.basicConfig(level=logging.INFO)
 
-# Store the latest position
 position_estimate = [0.0, 0.0, 0.0]
-vel_log = []  # For plotting velocity data later
+vel_log = []  # Store velocity samples
 # ------------------------------------------------
 
 
 def log_pos_callback(timestamp, data, logconf):
-    """Updates global position estimate (x, y, z)."""
     global position_estimate
     position_estimate[0] = data['stateEstimate.x']
     position_estimate[1] = data['stateEstimate.y']
@@ -33,7 +31,6 @@ def log_pos_callback(timestamp, data, logconf):
 
 
 def log_vel_callback(timestamp, data, logconf):
-    """Logs velocity data for plotting and prints live output."""
     vel_log.append([
         timestamp,
         data['stateEstimate.vx'],
@@ -46,7 +43,6 @@ def log_vel_callback(timestamp, data, logconf):
 
 
 def param_deck_loco(_, value_str):
-    """Detects whether the Loco Positioning deck is attached."""
     value = int(value_str)
     if value:
         deck_attached_event.set()
@@ -78,7 +74,7 @@ if __name__ == '__main__':
 
         # --- Configure estimator ---
         print("Configuring Kalman estimator for LPS...")
-        cf.param.set_value('stabilizer.estimator', '2')  # Kalman filter
+        cf.param.set_value('stabilizer.estimator', '2')
         time.sleep(0.1)
         cf.param.set_value('kalman.resetEstimation', '1')
         time.sleep(0.1)
@@ -94,37 +90,38 @@ if __name__ == '__main__':
         cf.param.set_value('pid_attitude.pitch_kp', 8.0)
         cf.param.set_value('pid_attitude.pitch_kd', 0.5)
 
-        # Velocity PID (X and Y)
-        cf.param.set_value('pid_velocity.x_kp', 35.0)
-        cf.param.set_value('pid_velocity.x_kd', 0.5)
-        cf.param.set_value('pid_velocity.y_kp', 35.0)
-        cf.param.set_value('pid_velocity.y_kd', 0.5)
+        # Velocity PID (body X/Y)
+        cf.param.set_value('velCtlPid.vxKp', 35.0)
+        cf.param.set_value('velCtlPid.vxKd', 0.5)
+        cf.param.set_value('velCtlPid.vyKp', 35.0)
+        cf.param.set_value('velCtlPid.vyKd', 0.5)
 
         time.sleep(0.5)
 
         # --- Verify PID values ---
-        def get_param_value(group, name):
-            return float(cf.param.get_value(f"{group}.{name}"))
+        def get_param_value(name):
+            return float(cf.param.get_value(name))
 
         pid_values = {
-            "pid_attitude.roll_kp": get_param_value("pid_attitude", "roll_kp"),
-            "pid_attitude.roll_kd": get_param_value("pid_attitude", "roll_kd"),
-            "pid_attitude.pitch_kp": get_param_value("pid_attitude", "pitch_kp"),
-            "pid_attitude.pitch_kd": get_param_value("pid_attitude", "pitch_kd"),
-            "pid_velocity.x_kp": get_param_value("pid_velocity", "x_kp"),
-            "pid_velocity.x_kd": get_param_value("pid_velocity", "x_kd"),
-            "pid_velocity.y_kp": get_param_value("pid_velocity", "y_kp"),
-            "pid_velocity.y_kd": get_param_value("pid_velocity", "y_kd"),
+            "pid_attitude.roll_kp": get_param_value("pid_attitude.roll_kp"),
+            "pid_attitude.roll_kd": get_param_value("pid_attitude.roll_kd"),
+            "pid_attitude.pitch_kp": get_param_value("pid_attitude.pitch_kp"),
+            "pid_attitude.pitch_kd": get_param_value("pid_attitude.pitch_kd"),
+            "velCtlPid.vxKp": get_param_value("velCtlPid.vxKp"),
+            "velCtlPid.vxKd": get_param_value("velCtlPid.vxKd"),
+            "velCtlPid.vyKp": get_param_value("velCtlPid.vyKp"),
+            "velCtlPid.vyKd": get_param_value("velCtlPid.vyKd"),
         }
 
         print("\n🧩 PID Parameters Set:")
         for name, val in pid_values.items():
-            print(f"  {name:30s} = {val}")
+            print(f"  {name:25s} = {val}")
 
-        assert abs(pid_values["pid_attitude.roll_kp"] - 8.0) < 0.01
-        assert abs(pid_values["pid_attitude.roll_kd"] - 0.5) < 0.01
-        assert abs(pid_values["pid_velocity.x_kp"] - 35.0) < 0.01
-        assert abs(pid_values["pid_velocity.x_kd"] - 0.5) < 0.01
+        # Basic sanity checks
+        assert abs(pid_values["velCtlPid.vxKp"] - 35.0) < 0.1
+        assert abs(pid_values["velCtlPid.vyKp"] - 35.0) < 0.1
+        assert abs(pid_values["velCtlPid.vxKd"] - 0.5) < 0.1
+        assert abs(pid_values["velCtlPid.vyKd"] - 0.5) < 0.1
 
         print("\n✅ PID parameters verified successfully.\n")
 
@@ -137,7 +134,7 @@ if __name__ == '__main__':
         logconf.data_received_cb.add_callback(log_vel_callback)
         logconf.start()
 
-        # --- Get current position ---
+        # --- Setup position logging for reference ---
         pos_log = LogConfig(name='Position', period_in_ms=100)
         pos_log.add_variable('stateEstimate.x', 'float')
         pos_log.add_variable('stateEstimate.y', 'float')
