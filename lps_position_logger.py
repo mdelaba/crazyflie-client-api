@@ -83,7 +83,7 @@ if __name__ == '__main__':
 
         # --- Command the movement ---
         with PositionHlCommander(scf, default_height=start_z) as pc:
-            pc.go_to(start_x, start_y, target_z, velocity=0.3)
+            pc.takeoff(self, absolute_height_m=target_z, duration_s=1)
             print("Ascending 50 cm...")
             time.sleep(3.0)
 
