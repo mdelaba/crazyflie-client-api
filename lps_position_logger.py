@@ -58,12 +58,14 @@ if __name__ == '__main__':
         print("Configuring Kalman estimator for LPS...")
         scf.cf.param.set_value('stabilizer.estimator', '2')   # Kalman filter
         time.sleep(0.1)
-        scf.cf.param.set_value('lpsTdoa.mode', '2')           # Use TDoA2 or TDoA3 depending on setup
-        time.sleep(0.1)
         scf.cf.param.set_value('kalman.resetEstimation', '1')
         time.sleep(0.1)
         scf.cf.param.set_value('kalman.resetEstimation', '0')
         time.sleep(1.0)
+
+        # Optional: make sure LPS is the position source
+        scf.cf.param.set_value('locSrv.ext_pos', '0')  # 0 = use Loco, not external system
+        time.sleep(0.1)
 
         # --- Setup logging for position estimates ---
         logconf = LogConfig(name='Position', period_in_ms=100)
