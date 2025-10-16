@@ -19,7 +19,7 @@ position_estimate = [0.0, 0.0, 0.0]
 
 
 def log_pos_callback(timestamp, data, logconf):
-    """Callback for each new position update from the LPS."""
+    """Called whenever new position data arrives from the Crazyflie."""
     global position_estimate
     position_estimate[0] = data['stateEstimate.x']
     position_estimate[1] = data['stateEstimate.y']
@@ -37,12 +37,12 @@ def param_deck_loco(_, value_str):
 
 
 if __name__ == '__main__':
-    # Initialize the low-level drivers
+    # Initialize communication drivers
     cflib.crtp.init_drivers(enable_debug_driver=False)
 
     print(f'Connecting to Crazyflie at URI {URI}...')
     with SyncCrazyflie(URI, cf=Crazyflie(rw_cache='./cache')) as scf:
-        # Detect the Loco deck
+        # Wait for Loco deck detection
         scf.cf.param.add_update_callback(
             group='deck',
             name='bcLoco',
@@ -56,18 +56,14 @@ if __name__ == '__main__':
 
         # --- Configure estimator for Loco Positioning ---
         print("Configuring Kalman estimator for LPS...")
-        scf.cf.param.set_value('stabilizer.estimator', '2')   # Kalman filter
+        scf.cf.param.set_value('stabilizer.estimator', '2')   # 2 = Kalman estimator
         time.sleep(0.1)
         scf.cf.param.set_value('kalman.resetEstimation', '1')
         time.sleep(0.1)
         scf.cf.param.set_value('kalman.resetEstimation', '0')
         time.sleep(1.0)
 
-        # Optional: make sure LPS is the position source
-        scf.cf.param.set_value('locSrv.ext_pos', '0')  # 0 = use Loco, not external system
-        time.sleep(0.1)
-
-        # --- Setup logging for position estimates ---
+        # --- Setup logging of state estimates ---
         logconf = LogConfig(name='Position', period_in_ms=100)
         logconf.add_variable('stateEstimate.x', 'float')
         logconf.add_variable('stateEstimate.y', 'float')
@@ -77,7 +73,7 @@ if __name__ == '__main__':
         logconf.data_received_cb.add_callback(log_pos_callback)
         logconf.start()
 
-        print("Reading LPS position data... (Press Ctrl+C to stop)\n")
+        print("\n📡 Reading LPS position data... (Press Ctrl+C to stop)\n")
 
         try:
             while True:
@@ -90,3 +86,4 @@ if __name__ == '__main__':
         finally:
             logconf.stop()
             print("Logging stopped.")
+
