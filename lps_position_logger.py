@@ -152,17 +152,17 @@ if __name__ == '__main__':
         print(f"Target position:  z={target_z:.2f}")
 
         # --- Movement sequence ---
-        with PositionHlCommander(scf, default_height=start_z) as pc:
-            print("Ascending 50 cm...")
-            pc.take_off(absolute_height_m=target_z, duration_s=1)
+        target_z = start_z + 0.5
+        print(f"Target position: z={target_z:.2f}")
 
+        with PositionHlCommander(scf, default_height=target_z) as pc:
+            print("Taking off automatically to target height...")
             time.sleep(3.0)
+
             print("Hovering for 3 seconds...")
             time.sleep(3.0)
 
-            print("Landing...")
-            pc.land()
-            time.sleep(2.0)
+            print("Landing automatically on exit...")
 
         # --- Stop logging ---
         logconf.stop()
