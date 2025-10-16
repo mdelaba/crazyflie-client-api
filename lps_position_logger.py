@@ -154,7 +154,7 @@ if __name__ == '__main__':
         # --- Movement sequence ---
         with PositionHlCommander(scf, default_height=start_z) as pc:
             print("Ascending 50 cm...")
-            pc.takeoff(self, absolute_height_m=target_z, duration_s=1)
+            pc.take_off(absolute_height_m=target_z, duration_s=1)
 
             time.sleep(3.0)
             print("Hovering for 3 seconds...")
