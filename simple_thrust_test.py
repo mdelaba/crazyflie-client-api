@@ -8,7 +8,7 @@ from cflib.utils import uri_helper
 
 # ---------------- Configuration ----------------
 URI = uri_helper.uri_from_env(default='radio://0/80/2M/E7E7E7E7E7')
-THRUST_PERCENT = 0.63       # one is 70% thrust for hover, other is about 63
+THRUST_PERCENT = 0.62       # one is 70% thrust for hover, other is about 62
 THRUST_VALUE = int(65535 * THRUST_PERCENT)
 HOLD_TIME = 5.0             # seconds
 # ------------------------------------------------
